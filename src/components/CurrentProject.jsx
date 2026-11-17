@@ -1,31 +1,21 @@
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react'; // Make sure to install lucide-react
-import hero1 from "../assets/projects/hyregram.png";
-import hero2 from "../assets/projects/medmatch.png";
-import hero3 from "../assets/projects/square.png";
+import hero1 from "../assets/hero/1.webp";
+import hero2 from "../assets/hero/2.webp";
+import hero3 from "../assets/hero/3.webp";
 
 const CurrentProject = () => {
   const projects = [
     {
       id: 1,
-      status: "In Progress",
-      statusColor: "bg-yellow-400",
-      title: "Nike Velocity Campaign",
+      status: "Completed",
+      statusColor: "bg-green-400",
+      title: "Podcast",
       description: "A high-octane commercial cut for Nike athletic wear. Pacing, beat-sync sound design, and custom kinetic typography transitions crafted in Premiere Pro & After Effects.",
-      tags: ["Commercial Cut", "Sound Design", "After Effects", "4K Delivery"],
+      tags: ["Commercial Cut"],
       link: "/reels",
       images: [hero1, hero3, hero2, hero1, hero2, hero3, hero1, hero3]
     },
-    {
-      id: 2,
-      status: "Completed",
-      statusColor: "bg-emerald-400",
-      title: "Porsche GT3 Cinematic Reel",
-      description: "An adrenaline-fueled automotive edit featuring custom speed ramping, motion blur simulation, and Kodak 2383 color grading for maximum viral engagement.",
-      tags: ["DaVinci Resolve", "Speed Ramps", "Color Grading", "Viral Reel"],
-      link: "/reels",
-      images: [hero2, hero1, hero3, hero2, hero1, hero3, hero2, hero1]
-    }
   ];
 
   return (

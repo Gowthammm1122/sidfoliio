@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Lock, Film, UploadCloud, Settings, Star, Trash2, 
   CheckCircle2, AlertCircle, RefreshCw, Key, LogOut, 
-  ExternalLink, ArrowLeft, Eye, Play, Sparkles
+  ExternalLink, ArrowLeft, Eye, Play, Sparkles,
+  Edit2, Image, X, Save, RotateCcw, FileText
 } from 'lucide-react';
-import profilePic from '../assets/images/navimage.png';
+import profilePic from '../assets/profile/pfp.png';
 import { 
   fetchReels, getSanityConfig, saveSanityConfig, testSanityConnection, 
-  uploadVideoToSanity, uploadImageToSanity, createReel, 
+  uploadVideoToSanity, uploadImageToSanity, createReel, updateReel,
   deleteReel, toggleFeaturedReel 
 } from '../services/sanity';
 import ReelViewerModal from '../components/ReelViewerModal';
@@ -57,6 +58,24 @@ const Admin = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [feedback, setFeedback] = useState(null);
+
+  // Edit Reel Modal State
+  const [editingReel, setEditingReel] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editClient, setEditClient] = useState('');
+  const [editCaption, setEditCaption] = useState('');
+  const [editCategory, setEditCategory] = useState('Commercial');
+  const [editAudio, setEditAudio] = useState('');
+  const [editViews, setEditViews] = useState('');
+  const [editLikes, setEditLikes] = useState('');
+  const [editIsFeatured, setEditIsFeatured] = useState(false);
+  const [editCoverUrl, setEditCoverUrl] = useState('');
+  const [editCoverFile, setEditCoverFile] = useState(null);
+  const [editCoverPreview, setEditCoverPreview] = useState('');
+  const [editVideoUrl, setEditVideoUrl] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editSaveStatus, setEditSaveStatus] = useState('');
+  const [editError, setEditError] = useState('');
 
   const loadData = async () => {
     try {
@@ -167,7 +186,7 @@ const Admin = () => {
 
       // 3. Save Document
       setUploadStatus('Saving reel document...');
-      await createReel({
+      const createdDoc = await createReel({
         title,
         client: client || 'Commercial Project',
         caption,
@@ -188,7 +207,8 @@ const Admin = () => {
         type: 'success', 
         message: sanityConfig.token 
           ? '🎉 Video reel published successfully to Sanity cloud!' 
-          : '🎉 Video reel saved locally! (Add your Sanity API Token in Settings to sync with cloud).' 
+          : '🎉 Video reel saved locally! (Add your Sanity API Token in Settings to sync with cloud).',
+        reel: createdDoc,
       });
 
       // Reset form
@@ -209,6 +229,108 @@ const Admin = () => {
     } finally {
       setIsUploading(false);
       setUploadStatus('');
+    }
+  };
+
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && editingReel && !isSavingEdit) {
+        setEditingReel(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editingReel, isSavingEdit]);
+
+  // Handle start editing a reel
+  const handleStartEdit = (reel) => {
+    setEditingReel(reel);
+    setEditTitle(reel.title || '');
+    setEditClient(reel.client || '');
+    setEditCaption(reel.caption || '');
+    setEditCategory(reel.category || 'Commercial');
+    setEditAudio(reel.audio || 'Original Audio - Siddarth');
+    setEditViews(reel.views || '10K');
+    setEditLikes(reel.likes || '1.2K');
+    setEditIsFeatured(Boolean(reel.isFeatured));
+    setEditCoverUrl(reel.coverUrl || '');
+    setEditCoverFile(null);
+    setEditCoverPreview('');
+    setEditVideoUrl(reel.videoUrl || '');
+    setEditError('');
+    setEditSaveStatus('');
+  };
+
+  // Handle changing thumbnail file in edit modal
+  const handleEditCoverChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditCoverFile(file);
+      setEditCoverPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handle saving reel edits
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editTitle.trim()) {
+      setEditError('Please enter a reel title.');
+      return;
+    }
+
+    setIsSavingEdit(true);
+    setEditError('');
+    setEditSaveStatus('Preparing updates...');
+
+    try {
+      let finalCoverUrl = editCoverUrl;
+      let coverAssetId = null;
+
+      // 1. Upload new thumbnail image if selected
+      if (editCoverFile) {
+        if (sanityConfig.projectId && sanityConfig.token) {
+          setEditSaveStatus('Uploading new thumbnail image to Sanity CDN...');
+          const imgAsset = await uploadImageToSanity(editCoverFile);
+          coverAssetId = imgAsset._id;
+          finalCoverUrl = imgAsset.url;
+        } else {
+          finalCoverUrl = editCoverPreview || editCoverUrl;
+        }
+      }
+
+      // 2. Commit update to Sanity and cache
+      setEditSaveStatus('Updating reel in Sanity...');
+      await updateReel(editingReel._id, {
+        title: editTitle,
+        client: editClient,
+        caption: editCaption,
+        category: editCategory,
+        audio: editAudio,
+        views: editViews,
+        likes: editLikes,
+        isFeatured: editIsFeatured,
+        coverUrl: finalCoverUrl || editingReel.coverUrl,
+        coverAssetId: coverAssetId || undefined,
+        videoUrl: editVideoUrl || editingReel.videoUrl,
+      });
+
+      setFeedback({
+        type: 'success',
+        message: `🎉 Reel "${editTitle}" updated successfully!`,
+      });
+
+      // Cleanup & close modal
+      setEditingReel(null);
+      setEditCoverFile(null);
+      setEditCoverPreview('');
+      loadData();
+    } catch (err) {
+      console.error('Failed to update reel:', err);
+      setEditError(err.message || 'Failed to update reel details.');
+    } finally {
+      setIsSavingEdit(false);
+      setEditSaveStatus('');
     }
   };
 
@@ -437,13 +559,25 @@ const Admin = () => {
 
         {/* Alert Feedback */}
         {feedback && (
-          <div className={`p-4 rounded-2xl flex items-center gap-3 text-sm font-geist mb-6 ${
+          <div className={`p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm font-geist mb-6 ${
             feedback.type === 'success' 
               ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300' 
               : 'bg-rose-500/10 border border-rose-500/20 text-rose-300'
           }`}>
-            {feedback.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-            <span>{feedback.message}</span>
+            <div className="flex items-center gap-3">
+              {feedback.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+              <span>{feedback.message}</span>
+            </div>
+            {feedback.reel && (
+              <button
+                type="button"
+                onClick={() => handleStartEdit(feedback.reel)}
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer self-end sm:self-auto"
+              >
+                <Edit2 size={13} />
+                <span>Edit Description & Thumbnail</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -734,12 +868,23 @@ const Admin = () => {
                     {/* Actions */}
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
                       <button
+                        type="button"
                         onClick={() => openPreview(reel)}
                         className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 text-xs font-geist flex items-center gap-1.5 transition-colors cursor-pointer"
                         title="Preview Reel"
                       >
                         <Eye size={14} />
                         <span>Preview</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleStartEdit(reel)}
+                        className="px-3 py-2 rounded-xl bg-[#E34400]/10 hover:bg-[#E34400]/20 text-[#E34400] border border-[#E34400]/30 text-xs font-geist font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Edit Description & Thumbnail"
+                      >
+                        <Edit2 size={13} />
+                        <span>Edit</span>
                       </button>
 
                       <button
@@ -853,6 +998,347 @@ const Admin = () => {
         onClose={() => setViewerOpen(false)}
         onIndexChange={(newIdx) => setPreviewIndex(newIdx)}
       />
+
+      {/* ========================================================= */}
+      {/* EDIT REEL MODAL                                          */}
+      {/* ========================================================= */}
+      {editingReel && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isSavingEdit) {
+              setEditingReel(null);
+            }
+          }}
+        >
+          <div className="relative w-full max-w-4xl bg-[#121212] border border-white/15 rounded-3xl p-5 sm:p-8 shadow-2xl my-auto text-white max-h-[92vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#E34400]/15 border border-[#E34400]/30 flex items-center justify-center text-[#E34400] flex-shrink-0">
+                  <Edit2 size={18} />
+                </div>
+                <div>
+                  <h2 className="font-geist text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                    <span>Edit Reel Details</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                      {editingReel.category || 'Reel'}
+                    </span>
+                  </h2>
+                  <p className="font-geist text-xs text-white/50">
+                    Update description, thumbnail image, brand info, and homepage visibility
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => !isSavingEdit && setEditingReel(null)}
+                disabled={isSavingEdit}
+                className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body (Scrollable) */}
+            <form onSubmit={handleSaveEdit} className="overflow-y-auto py-5 pr-1 space-y-6 flex-1 custom-scrollbar">
+              
+              {editError && (
+                <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-geist flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>{editError}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                {/* --- LEFT COLUMN: THUMBNAIL EDITOR (5 cols) --- */}
+                <div className="lg:col-span-5 space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-geist font-semibold text-white/80 flex items-center gap-1.5">
+                        <Image size={14} className="text-[#E34400]" />
+                        <span>Thumbnail / Cover</span>
+                      </label>
+                      {editCoverPreview && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditCoverFile(null);
+                            setEditCoverPreview('');
+                          }}
+                          className="text-[11px] text-[#E34400] hover:underline flex items-center gap-1 cursor-pointer font-geist"
+                        >
+                          <RotateCcw size={12} />
+                          <span>Reset</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Thumbnail 9:16 Aspect Preview Card */}
+                    <div className="relative w-full max-w-[210px] mx-auto aspect-[9/16] rounded-2xl overflow-hidden bg-black/60 border border-white/15 shadow-xl group">
+                      <img
+                        src={editCoverPreview || editCoverUrl || editingReel.coverUrl}
+                        alt="Thumbnail Preview"
+                        className="w-full h-full object-cover"
+                      />
+
+                      {/* Status Badges */}
+                      {editCoverPreview ? (
+                        <div className="absolute top-2.5 left-2.5 right-2.5 px-2 py-1 rounded-md bg-[#E34400] text-white text-[10px] font-bold font-geist shadow-md text-center">
+                          New Thumbnail Preview
+                        </div>
+                      ) : (
+                        <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-white/80 text-[10px] font-medium font-geist border border-white/10">
+                          Active Cover
+                        </div>
+                      )}
+
+                      {/* Quick Upload Overlay */}
+                      <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-3 text-center cursor-pointer">
+                        <UploadCloud size={24} className="text-[#E34400]" />
+                        <span className="text-xs font-semibold text-white font-geist">Upload New Image</span>
+                        <span className="text-[10px] text-white/60">Click to choose image file</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleEditCoverChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    <p className="text-[11px] text-white/40 text-center mt-2 font-geist">
+                      Hover to change or select a file below
+                    </p>
+                  </div>
+
+                  {/* File & URL Inputs */}
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-geist text-white/60 mb-1">Upload New Thumbnail Image</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditCoverChange}
+                        className="block w-full text-xs text-white/60 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-[#E34400]/20 hover:file:text-[#E34400] file:cursor-pointer cursor-pointer border border-white/10 rounded-xl p-1 bg-black/40"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-geist text-white/60 mb-1">Or Thumbnail Image URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://images.unsplash.com/..."
+                        value={editCoverUrl}
+                        onChange={(e) => {
+                          setEditCoverUrl(e.target.value);
+                          if (editCoverPreview) {
+                            setEditCoverFile(null);
+                            setEditCoverPreview('');
+                          }
+                        }}
+                        className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#E34400] font-geist"
+                      />
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* --- RIGHT COLUMN: DESCRIPTION & METADATA (7 cols) --- */}
+                <div className="lg:col-span-7 space-y-4">
+                  
+                  {/* Title */}
+                  <div>
+                    <label className="block text-xs font-geist text-white/70 mb-1 font-medium">Reel Title *</label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      required
+                      className="w-full bg-black/60 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#E34400] font-geist"
+                      placeholder="e.g. Nike Velocity - Director's Cut"
+                    />
+                  </div>
+
+                  {/* Video Description / Caption (Highlighted) */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-geist text-white/80 font-medium flex items-center gap-1.5">
+                        <FileText size={13} className="text-[#E34400]" />
+                        <span>Video Description / Caption *</span>
+                      </label>
+                      <span className="text-[11px] text-white/40 font-geist">
+                        {editCaption.length} characters
+                      </span>
+                    </div>
+                    <textarea
+                      rows={5}
+                      value={editCaption}
+                      onChange={(e) => setEditCaption(e.target.value)}
+                      className="w-full bg-black/60 border border-white/15 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-[#E34400] font-geist leading-relaxed placeholder:text-white/30"
+                      placeholder="Describe your edit, storytelling angle, color grading palette, cuts & pacing, or client deliverables..."
+                    />
+
+                    {/* Quick Tag suggestions */}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      <span className="text-[10px] text-white/40 font-geist mr-1">Quick tags:</span>
+                      {[
+                        '#ColorGrading',
+                        '#DaVinciResolve',
+                        '#CommercialCut',
+                        '#MotionGraphics',
+                        '#SoundDesign',
+                        '#PremierePro',
+                        '#ViralReels',
+                      ].map(tag => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            if (!editCaption.includes(tag)) {
+                              setEditCaption(prev => prev ? `${prev} ${tag}` : tag);
+                            }
+                          }}
+                          className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-[#E34400]/20 text-white/60 hover:text-[#E34400] text-[10px] font-geist transition-colors cursor-pointer border border-white/5"
+                        >
+                          +{tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Client & Category Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-geist text-white/70 mb-1 font-medium">Client / Brand</label>
+                      <input
+                        type="text"
+                        value={editClient}
+                        onChange={(e) => setEditClient(e.target.value)}
+                        className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#E34400] font-geist"
+                        placeholder="e.g. Nike, Red Bull, Spotify"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-geist text-white/70 mb-1 font-medium">Category</label>
+                      <select
+                        value={editCategory}
+                        onChange={(e) => setEditCategory(e.target.value)}
+                        className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#E34400] font-geist cursor-pointer"
+                      >
+                        <option value="Commercial">Commercial</option>
+                        <option value="Motion Graphics">Motion Graphics</option>
+                        <option value="Color Grade">Color Grade</option>
+                        <option value="Shorts">Shorts / Reels</option>
+                        <option value="Fashion">Fashion & Editorial</option>
+                        <option value="3D & VFX">3D & VFX</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Audio Track */}
+                  <div>
+                    <label className="block text-xs font-geist text-white/70 mb-1 font-medium">Audio Track / Music Credit</label>
+                    <input
+                      type="text"
+                      value={editAudio}
+                      onChange={(e) => setEditAudio(e.target.value)}
+                      className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#E34400] font-geist"
+                      placeholder="e.g. Original Audio - Siddarth"
+                    />
+                  </div>
+
+                  {/* Views, Likes & Featured Toggle */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <div>
+                      <label className="block text-xs font-geist text-white/70 mb-1 font-medium">Views Count</label>
+                      <input
+                        type="text"
+                        value={editViews}
+                        onChange={(e) => setEditViews(e.target.value)}
+                        className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#E34400] font-geist"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-geist text-white/70 mb-1 font-medium">Likes Count</label>
+                      <input
+                        type="text"
+                        value={editLikes}
+                        onChange={(e) => setEditLikes(e.target.value)}
+                        className="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#E34400] font-geist"
+                      />
+                    </div>
+
+                    <div className="flex flex-col justify-end">
+                      <label className="flex items-center gap-2 p-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={editIsFeatured}
+                          onChange={(e) => setEditIsFeatured(e.target.checked)}
+                          className="accent-[#E34400] w-4 h-4 rounded"
+                        />
+                        <span className="text-xs font-bold font-geist text-white">⭐ Homepage</span>
+                      </label>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Modal Actions Footer */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-white/50 font-geist">
+                  {isSavingEdit ? (
+                    <span className="text-[#E34400] flex items-center gap-2 font-medium">
+                      <RefreshCw size={14} className="animate-spin" />
+                      {editSaveStatus || 'Saving changes to Sanity...'}
+                    </span>
+                  ) : (
+                    <span>Changes sync directly to Sanity CDN and update your live portfolio.</span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    disabled={isSavingEdit}
+                    onClick={() => setEditingReel(null)}
+                    className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-geist text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSavingEdit}
+                    className="px-6 py-2.5 rounded-xl bg-[#E34400] hover:bg-orange-600 disabled:opacity-50 text-white font-geist text-xs font-bold transition-all shadow-lg shadow-[#E34400]/25 flex items-center gap-2 cursor-pointer"
+                  >
+                    {isSavingEdit ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} />
+                        <span>Save Changes</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

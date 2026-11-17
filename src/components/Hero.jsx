@@ -6,10 +6,10 @@ import "swiper/css/autoplay";
 import ScrollAnimateWrapper from "./ScrollAnimateWrapper";
 
 // Assets
-import hero1 from "../assets/projects/hyregram.png";
-import hero2 from "../assets/projects/medmatch.png";
-import hero3 from "../assets/projects/square.png";
-import hero4 from "../assets/projects/squarelink.png";
+import hero1 from "../assets/hero/1.webp";
+import hero2 from "../assets/hero/2.webp";
+import hero3 from "../assets/hero/3.webp";
+import hero4 from "../assets/hero/4.webp";
 import letstalkWhiteIcon from "../assets/logos/letstalkwhite.png";
 
 const Hero = () => {
@@ -38,35 +38,47 @@ const Hero = () => {
               </div>
             </div>
             <span className="text-[#555] font-geist text-[14px] font-medium">
-              For Video Editing & Brand Campaigns
+              For Video Editing & Motion Designing
             </span>
           </div>
         </ScrollAnimateWrapper>
 
-        {/* --- 2. Main Heading (Tight Typography) --- */}
+
+        {/* --- 2. Main Heading --- */}
         <ScrollAnimateWrapper animation="scroll-fade-up" threshold={0.1}>
-          <div className="text-center max-w-5xl px-4 mb-8">
-            <h1 className="font-geist text-[40px] md:text-[82px] font-semibold leading-[1.05] tracking-tighter text-[#0A0A0A]">
-              <span className="text-[#888] font-normal block md:inline">Video Editor &</span>{" "}
-              Motion Designer <br className="hidden md:block" />
-              crafting{" "}
+          <div className="text-center max-w-5xl px-4 mb-8 mx-auto">
+            <h1 className="font-geist text-[42px] md:text-[76px] font-semibold leading-[1.08] tracking-[-0.055em] text-[#0A0A0A]">
+              <span className="text-[#888] font-normal">
+                Video Editor &
+              </span>{" "}
+              Motion Designer
+              <br className="hidden md:block" />
               <span className="relative inline-block">
-                viral
-                {/* Underline decoration */}
-                <svg className="absolute w-full h-3 -bottom-1 left-0 text-[#E34400] opacity-80" viewBox="0 0 100 10" preserveAspectRatio="none">
-                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="3" fill="none" />
+                Creating
+                <svg
+                  className="absolute w-full h-3 -bottom-1 left-0 text-[#E34400] opacity-80"
+                  viewBox="0 0 100 10"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M0 5 Q 50 10 100 5"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="none"
+                  />
                 </svg>
               </span>{" "}
-              visual stories
+              Visual Stories.
             </h1>
           </div>
         </ScrollAnimateWrapper>
+
 
         {/* --- 3. Subtext --- */}
         <ScrollAnimateWrapper animation="scroll-fade-up" threshold={0.1}>
           <div className="text-center max-w-xl px-4 mb-12">
             <p className="text-[#666] font-geist text-[18px] md:text-[20px] font-normal leading-[1.6] tracking-tight">
-              I create high-retention commercial cuts, viral reels, and dynamic motion graphics that captivate audiences and elevate modern brands.
+              Crafting compelling visuals through cinematic edits, engaging reels, and creative motion graphics.
             </p>
           </div>
         </ScrollAnimateWrapper>
@@ -79,12 +91,12 @@ const Hero = () => {
               href="/reels"
               className="group h-[56px] px-8 bg-[#111] hover:bg-[#E34400] text-white rounded-full flex items-center gap-3 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
             >
-              <span className="font-geist text-[16px] font-medium tracking-wide">Explore Instagram Reels</span>
+              <span className="font-geist text-[16px] font-medium tracking-wide">Explore my works</span>
             </a>
 
             {/* Let's Talk */}
             <a
-              href="https://wa.me/9080638903"
+              href="https://wa.me/8903031101"
               target="_blank"
               rel="noopener noreferrer"
               className="h-[56px] px-8 bg-white border border-gray-200 text-[#141414] rounded-full flex items-center justify-center hover:bg-gray-50 hover:border-gray-300 transition-colors"

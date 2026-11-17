@@ -138,9 +138,15 @@ export const fetchReels = async () => {
   }
 
   const localReels = getLocalReels();
+  // Merge any locally cached updates for Sanity documents for optimistic responsiveness
+  const mergedSanity = sanityReels.map(sr => {
+    const localMatch = localReels.find(lr => lr._id === sr._id);
+    return localMatch ? { ...sr, ...localMatch } : sr;
+  });
+
   const sanityIds = new Set(sanityReels.map(r => r._id));
   const uniqueLocals = localReels.filter(r => !sanityIds.has(r._id));
-  return [...sanityReels, ...uniqueLocals];
+  return [...mergedSanity, ...uniqueLocals];
 };
 
 /**
@@ -240,6 +246,67 @@ export const createReel = async (reelData) => {
   saveLocalReels(locals);
 
   return newReel;
+};
+
+/**
+ * Update an existing Reel
+ * Modifies Sanity cloud document and syncs local storage
+ */
+export const updateReel = async (reelId, updatedData) => {
+  const client = getSanityClient();
+  const config = getSanityConfig();
+
+  const isCloudDoc = client && config.token && !reelId.startsWith('local-') && !reelId.startsWith('default-');
+
+  if (isCloudDoc) {
+    try {
+      const setFields = {};
+
+      if (updatedData.title !== undefined) setFields.title = updatedData.title;
+      if (updatedData.caption !== undefined) setFields.caption = updatedData.caption;
+      if (updatedData.client !== undefined) setFields.client = updatedData.client;
+      if (updatedData.category !== undefined) setFields.category = updatedData.category;
+      if (updatedData.audio !== undefined) setFields.audio = updatedData.audio;
+      if (updatedData.views !== undefined) setFields.views = updatedData.views;
+      if (updatedData.likes !== undefined) setFields.likes = updatedData.likes;
+      if (updatedData.commentsCount !== undefined) setFields.commentsCount = updatedData.commentsCount;
+      if (updatedData.isFeatured !== undefined) setFields.isFeatured = Boolean(updatedData.isFeatured);
+      if (updatedData.order !== undefined) setFields.order = updatedData.order;
+      if (updatedData.coverUrl !== undefined) setFields.coverUrl = updatedData.coverUrl;
+      if (updatedData.videoUrl !== undefined) setFields.videoUrl = updatedData.videoUrl;
+
+      if (updatedData.coverAssetId) {
+        setFields.coverImage = {
+          _type: 'image',
+          asset: { _type: 'reference', _ref: updatedData.coverAssetId },
+        };
+      }
+
+      if (updatedData.videoAssetId) {
+        setFields.videoFile = {
+          _type: 'file',
+          asset: { _type: 'reference', _ref: updatedData.videoAssetId },
+        };
+      }
+
+      await client.patch(reelId).set(setFields).commit();
+    } catch (err) {
+      console.warn('Sanity update patch failed:', err.message);
+      throw err;
+    }
+  }
+
+  // Also update or add to local storage cache for instant optimistic reflection
+  const locals = getLocalReels();
+  const existingIdx = locals.findIndex(r => r._id === reelId);
+  if (existingIdx !== -1) {
+    locals[existingIdx] = { ...locals[existingIdx], ...updatedData };
+  } else {
+    locals.push({ _id: reelId, ...updatedData });
+  }
+  saveLocalReels(locals);
+
+  return { _id: reelId, ...updatedData };
 };
 
 /**
