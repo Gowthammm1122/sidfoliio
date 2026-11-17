@@ -11,9 +11,9 @@ const CurrentProject = () => {
       status: "Completed",
       statusColor: "bg-green-400",
       title: "Podcast",
-      description: "A high-octane commercial cut for Nike athletic wear. Pacing, beat-sync sound design, and custom kinetic typography transitions crafted in Premiere Pro & After Effects.",
-      tags: ["Commercial Cut"],
-      link: "/reels",
+      description: "Episode 1 | Skale Talks |How Banking, AI & Assets Are Redefining Wealth | Dr. Sailesh Khandelwal",
+      tags: ["podcast", "long video"],
+      link: "https://www.youtube.com/watch?v=NmH-5v5pFKg",
       images: [hero1, hero3, hero2, hero1, hero2, hero3, hero1, hero3]
     },
   ];

@@ -49,8 +49,7 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Home', link: '#home' },
     { name: 'About', link: '#about' },
-    { name: 'Works', link: '#works' },
-    { name: 'Reels', link: '/reels', isSpecial: true },
+    { name: 'My works', link: '/reels' },
     { name: 'FAQ', link: '#faq' },
   ];
 

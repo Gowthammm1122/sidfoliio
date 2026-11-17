@@ -53,7 +53,7 @@ const Footer = () => {
 
                 <div className="flex flex-wrap items-center gap-6">
                   <a
-                    href="https://wa.me/9080638903"
+                    href="https://wa.me/8903031101"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group h-[64px] px-8 bg-white rounded-full flex items-center gap-4 hover:bg-gray-100 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
@@ -67,7 +67,7 @@ const Footer = () => {
                   </a>
 
                   <a
-                    href="mailto:siddarthgowtham7@gmail.com"
+                    href="mailto:Siddarth10228@gmail.com"
                     className="group h-[64px] px-8 bg-black/20 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 hover:scale-105"
                   >
                     <span className="font-geist text-[18px] font-medium text-white group-hover:text-black">
@@ -84,8 +84,7 @@ const Footer = () => {
                 <span className="text-white/40 uppercase tracking-widest text-xs font-bold mb-2">Menu</span>
                 {[
                   { name: 'Home', href: '/#home' },
-                  { name: 'Works', href: '/#works' },
-                  { name: 'Instagram Reels', href: '/reels' },
+                  { name: 'my works', href: '/reels' },
                   { name: 'About', href: '/#about' },
                 ].map((item) => (
                   <a key={item.name} href={item.href} className="font-geist text-[18px] font-medium text-white hover:text-black transition-colors">
@@ -95,9 +94,8 @@ const Footer = () => {
               </div>
               <div className="flex flex-col gap-4">
                 <span className="text-white/40 uppercase tracking-widest text-xs font-bold mb-2">Socials</span>
-                <a href="/reels" className="font-geist text-[18px] font-medium text-white hover:text-black transition-colors">Instagram</a>
-                <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="font-geist text-[18px] font-medium text-white hover:text-black transition-colors">Linkedin</a>
-                <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" className="font-geist text-[18px] font-medium text-white hover:text-black transition-colors">YouTube</a>
+                <a href="https://www.instagram.com/http.sidarth/" className="font-geist text-[18px] font-medium text-white hover:text-black transition-colors">Instagram</a>
+                <a href="https://www.linkedin.com/in/siddarth-a-sid/" target="_blank" rel="noopener noreferrer" className="font-geist text-[18px] font-medium text-white hover:text-black transition-colors">Linkedin</a>
               </div>
             </div>
           </div>
@@ -125,13 +123,6 @@ const Footer = () => {
             <p className="font-geist text-[14px] text-white/60">
               © 2025 All rights reserved.
             </p>
-
-            <div className="hidden md:flex flex-col items-end">
-              <span className="font-geist text-[14px] text-white/60 mb-1">Local Time</span>
-              <span className="font-geist text-[16px] font-medium text-white">
-                {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
-              </span>
-            </div>
           </div>
 
         </div>

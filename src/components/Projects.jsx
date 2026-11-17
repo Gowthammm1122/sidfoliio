@@ -200,16 +200,9 @@ const Projects = () => {
                 <Clapperboard size={26} />
               </div>
               <div>
-                <div className="flex items-center justify-center md:justify-start gap-2 text-[#E34400] text-xs font-bold uppercase tracking-wider mb-1">
-                  <Sparkles size={13} />
-                  <span>Interactive Experience</span>
-                </div>
                 <h4 className="font-geist text-[20px] md:text-[22px] font-bold text-[#0A0A0A]">
-                  Explore the Complete Instagram Reels Profile
+                  Explore all my works
                 </h4>
-                <p className="font-geist text-[14px] text-[#666] mt-0.5 max-w-xl">
-                  Watch full-length edits, commercial campaigns, sound design breakdowns, and client work in an authentic Instagram interface.
-                </p>
               </div>
             </div>
 
@@ -217,7 +210,7 @@ const Projects = () => {
               onClick={() => navigate('/reels')}
               className="px-7 py-3.5 bg-[#0A0A0A] hover:bg-[#E34400] text-white font-geist text-[14px] font-semibold rounded-full flex items-center gap-2.5 transition-colors flex-shrink-0 cursor-pointer shadow-md"
             >
-              <span>Open Instagram View</span>
+              <span>Open My works</span>
               <MoveRight size={16} />
             </button>
           </div>
